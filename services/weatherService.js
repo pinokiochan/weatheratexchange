@@ -1,23 +1,21 @@
-const axios = require('axios');
+import fetch from 'node-fetch';
 
-async function fetchWeather(city) {
-    const apiKey = process.env.WEATHER_API_KEY; // Используем API ключ из .env
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+export async function getWeatherData(city){
+    const response = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`);
+    const data = await response.json();
 
-    const response = await axios.get(url);
-    const { main, weather, wind, coord, sys } = response.data;
-
-    return {
-        temperature: main.temp,
-        feelsLike: main.feels_like,
-        description: weather[0].description,
-        humidity: main.humidity,
-        pressure: main.pressure,
-        windSpeed: wind.speed,
-        coordinates: coord,
-        countryCode: sys.country,
-        rainVolume: response.data.rain ? response.data.rain['1h'] : 0
-    };
+    return{
+        city: data.name,
+        country: data.sys.country,
+        temperature: data.main.temp,
+        feelsLike: data.main.feels_like,
+        humidity: data.main.humidity,
+        description: data.weather[0].description,
+        icon: data.weather[0].icon,
+        pressure: data.main.pressure,
+        windSpeed: data.wind.speed,
+        rain: data.rain ? data.rain['3h']: 0,
+        coord: data.coord
+        
+    }
 }
-
-module.exports = { fetchWeather };

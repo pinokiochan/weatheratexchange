@@ -1,67 +1,83 @@
-const weatherApiKey = "your_openweathermap_api_key";
-const exchangeApiKey = "your_exchangerate_api_key";
-const timeZoneApiKey = "your_timezonedb_api_key";
-let map, marker;
+let map;
 
-document.getElementById('get-weather-btn').addEventListener('click', () => {
-    const city = document.getElementById('city-input').value;
-    fetchWeatherByCity(city);
-});
+async function getWeather() {
+    const city = document.getElementById('cityInput').value;
+    try {
+        const response = await fetch(`/api/weather/${city}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch weather data');
+        }
+        const data = await response.json();
 
-function fetchWeatherByCity(city) {
-    fetch(`/api/weather?city=${city}`)
-    .then(response => response.json())
-    .then(data => {
-        const weatherInfo = `
-            <h2>Current weather in ${city}</h2>
-            <p>Temperature: ${data.temperature}°C</p>
-            <p>Feels like: ${data.feelsLike}°C</p>
-            <p>Description: ${data.description}</p>
-            <p>Humidity: ${data.humidity}%</p>
-            <p>Pressure: ${data.pressure}hPa</p>
-            <p>Wind Speed: ${data.windSpeed}m/s</p>
-            <p>Coordinates: ${data.coordinates.lat}, ${data.coordinates.lon}</p>
-            <p>Rain Volume: ${data.rainVolume} mm</p>
+        displayWeatherInfo(data.weather);
+        displayTimezoneInfo(data.timezone);
+        displayForecastInfo(data.forecast);
+        initializeMap(data.mapCoord);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('weatherInfo').innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+}
+
+function displayWeatherInfo(weather) {
+    const weatherInfo = document.getElementById('weatherInfo');
+    const iconUrl = `http://openweathermap.org/img/wn/${weather.icon}@2x.png`;
+
+    weatherInfo.innerHTML = `
+        <h2>Weather in ${weather.city}, ${weather.country}</h2>
+        <img src="${iconUrl}" alt="${weather.description}" />
+        <p>Temperature: ${weather.temperature}°C</p>
+        <p>Feels like: ${weather.feelsLike}°C</p>
+        <p>Description: ${weather.description}</p>
+        <p>Humidity: ${weather.humidity}%</p>
+        <p>Pressure: ${weather.pressure} hPa</p>
+        <p>Wind Speed: ${weather.windSpeed} m/s</p>
+        <p>Rain (last 3h): ${weather.rain} mm</p>
+    `;
+}
+
+function displayTimezoneInfo(timezone) {
+    const timezoneInfo = document.getElementById('timezoneInfo');
+    timezoneInfo.innerHTML = `
+        <h2>Timezone Information</h2>
+        <p>Timezone: ${timezone.zoneName}</p>
+        <p>Local Time: ${timezone.localTime}</p>
+    `;
+}
+
+function displayForecastInfo(forecast) {
+    const forecastInfo = document.getElementById('forecastInfo');
+    let forecastHtml = '<h2>5-Day Forecast</h2>';
+
+    forecast.forEach(day => {
+        const date = new Date(day.date);
+        forecastHtml += `
+            <div class="forecast-day">
+                <h3>${date.toDateString()}</h3>
+                <p>Min: ${day.minTemp}°C</p>
+                <p>Max: ${day.maxTemp}°C</p>
+                <p>Day: ${day.dayPhrase}</p>
+                <p>Night: ${day.nightPhrase}</p>
+            </div>
         `;
-        document.getElementById('weather-info').innerHTML = weatherInfo;
-        updateMap(data.coordinates.lat, data.coordinates.lon);
-        fetchTimeZone(data.coordinates.lat, data.coordinates.lon);
-    }).catch(error => {
-        document.getElementById('weather-info').innerHTML = `<p>Error fetching weather data</p>`;
     });
+
+    forecastInfo.innerHTML = forecastHtml;
 }
 
-function updateMap(lat, lon) {
-    if (!map) {
-        map = L.map('map').setView([lat, lon], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-    } else {
-        map.setView([lat, lon], 13);
+function initializeMap(coord) {
+    if (map) {
+        map.remove();
     }
+    
+    map = L.map('map').setView([coord.lat, coord.lon], 10);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-    if (marker) {
-        marker.setLatLng([lat, lon]);
-    } else {
-        marker = L.marker([lat, lon]).addTo(map);
-    }
+    L.marker([coord.lat, coord.lon]).addTo(map)
+        .bindPopup('City Location')
+        .openPopup();
 }
 
-function fetchTimeZone(lat, lon) {
-    fetch(`/api/time-zone?lat=${lat}&lon=${lon}`)
-    .then(response => response.json())
-    .then(data => {
-        const timeZoneInfo = `<h3>Timezone: ${data.zoneName}</h3>
-                              <p>Current Time: ${data.formattedTime}</p>`;
-        document.getElementById('timezone-info').innerHTML = timeZoneInfo;
-    });
-}
-
-fetch(`/api/exchange-rate`)
-    .then(response => response.json())
-    .then(data => {
-        const exchangeRateInfo = `<h3>Exchange Rate (USD to KZT): ${data.kztRate}</h3>`;
-        document.getElementById('exchange-rate-info').innerHTML = exchangeRateInfo;
-    });

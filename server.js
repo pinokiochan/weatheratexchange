@@ -1,56 +1,21 @@
-const express = require('express');
-const path = require('path');
-const dotenv = require('dotenv');
-const { fetchWeather } = require('./services/weatherService');
-const { fetchTimeZone } = require('./services/timeZoneService');
-const { fetchExchangeRate } = require('./services/exchangeRateService');
+import express from 'express';
+import path from 'path';
+import dotenv from 'dotenv';
+import weatherRoutes from './routes/weatherRoutes.js';
+import {fileURLToPath} from 'url';
 
-dotenv.config(); // Загружаем переменные окружения из .env
+dotenv.config();
 
-const app = express();
+const app =express();
 const port = 3000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.use(express.static('public'));
+app.use('/', weatherRoutes);
+app.get('/', (req, res) => {
+    res.sendFile(path,join(__dirname, 'public', 'index.html'));
 });
-
-app.get('/api/weather', async (req, res) => {
-    const { city } = req.query;
-    if (!city) {
-        return res.status(400).json({ error: 'City name is required' });
-    }
-    try {
-        const weatherData = await fetchWeather(city);
-        res.json(weatherData);
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching weather data' });
-    }
-});
-
-app.get('/api/time-zone', async (req, res) => {
-    const { lat, lon } = req.query;
-    if (!lat || !lon) {
-        return res.status(400).json({ error: 'Latitude and longitude are required' });
-    }
-    try {
-        const timeZoneData = await fetchTimeZone(lat, lon);
-        res.json(timeZoneData);
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching time zone data' });
-    }
-});
-
-app.get('/api/exchange-rate', async (req, res) => {
-    try {
-        const exchangeRateData = await fetchExchangeRate();
-        res.json(exchangeRateData);
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching exchange rate data' });
-    }
-});
-
-app.listen(port, () => {
-    console.log(`Server is listening at http://localhost:${port}`);
-});
+app.listen(port, ()=> {
+    console.log(`Server running on port http://localhost:${port}`);  
+})
