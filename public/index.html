@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather API App</title>
+    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <h1><i class="fas fa-sun"></i>Weather</h1>
+        <label for="city-input" class="visually-hidden">Enter the city</label>
+        <input type="text" id="city-input" placeholder="Enter the city">
+        <button id="get-weather-btn">Search</button>
+        <div id="weather-info"></div>
+        <div id="map"></div>
+        <div id="exchange-rate-info"></div>
+        <div id="timezone-info"></div>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>
